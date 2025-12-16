@@ -4,14 +4,12 @@ def generate_proposal(application: dict) -> dict:
     """
     severity = application.get("severity", "laag")
     decision = "HUMAN_REVIEW" if severity == "hoog" else "AUTOMATISCH"
-
     explanation = (
         "Hoog risico, menselijke beoordeling vereist."
         if decision == "HUMAN_REVIEW"
         else "Laag risico, AI-ondersteuning voldoende."
     )
 
-    # Simuleer verboden termen in description
     flags = {}
     if "verboden" in application.get("description", "").lower():
         flags["forbidden_term"] = True

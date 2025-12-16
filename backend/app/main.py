@@ -1,73 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
-from datetime import datetime
-from pydantic import BaseModel
 
-# ---------------------------
-# MODELS
-# ---------------------------
-class Application(BaseModel):
-    citizenId: str
-    ageGroup: str
-    requestType: str
-    severity: str
-    consentAI: bool
-    description: str
+from .models import Application
+from .ai import generate_proposal
+from .fairness import check_fairness
+from .audit import log_audit
 
-# ---------------------------
-# STUB AI
-# ---------------------------
-def generate_proposal(application: dict) -> dict:
-    severity = application.get("severity", "laag")
-    decision = "HUMAN_REVIEW" if severity == "hoog" else "AUTOMATISCH"
-    explanation = (
-        "Hoog risico, menselijke beoordeling vereist."
-        if decision == "HUMAN_REVIEW"
-        else "Laag risico, AI-ondersteuning voldoende."
-    )
-
-    flags = {}
-    if "verboden" in application.get("description", "").lower():
-        flags["forbidden_term"] = True
-
-    return {"decision": decision, "explanation": explanation, "flags": flags}
-
-# ---------------------------
-# FAIRNESS CHECK
-# ---------------------------
-FORBIDDEN_TERMS = ["religie", "ras", "nationaliteit", "geslacht"]
-
-def check_fairness(description: str) -> dict:
-    flags = {}
-    for term in FORBIDDEN_TERMS:
-        if term.lower() in description.lower():
-            flags[f"forbidden_{term}"] = True
-    return flags
-
-# ---------------------------
-# AUDIT LOG (print voor nu)
-# ---------------------------
-def log_audit(token: str, application: dict, ai_result: dict):
-    print("=== AUDIT LOG ===")
-    print(f"Token: {token}")
-    print(f"CitizenId (pseudoniem): {application.get('citizenId')}")
-    print(f"Severity: {application.get('severity')}")
-    print(f"Decision: {ai_result['decision']}")
-    print(f"Explanation: {ai_result['explanation']}")
-    print(f"Flags: {ai_result['flags']}")
-    print(f"Timestamp: {datetime.utcnow()}")
-    print("=================")
-
-# ---------------------------
-# FASTAPI APP
-# ---------------------------
+# FastAPI app
 app = FastAPI()
 
-# CORS instellen zodat React frontend kan fetchen
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # voor testen
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -80,7 +25,7 @@ def submit_application(app_data: Application):
     # Pseudonimiseer citizenId
     token = str(uuid4())
     app_dict = app_data.dict()
-    app_dict["citizenId"] = token  # vervang voor privacy
+    app_dict["citizenId"] = token
 
     # AI voorstel
     ai_result = generate_proposal(app_dict)

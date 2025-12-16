@@ -1,14 +1,11 @@
 from pydantic import BaseModel
 
 class Application(BaseModel):
-    citizenId: str
+    name: str
+    address: str
+    citizenId: str = ""  # wordt vervangen door token
     ageGroup: str
     requestType: str
     severity: str
     consentAI: bool
     description: str
-
-class AIResult(BaseModel):
-    decision: str
-    explanation: str
-    flags: dict

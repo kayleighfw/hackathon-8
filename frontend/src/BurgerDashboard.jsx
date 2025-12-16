@@ -3,8 +3,9 @@ import { useState } from "react";
 
 export default function BurgerDashboard() {
   const [form, setForm] = useState({
-    citizenId: "",
-    ageGroup: "",
+    name: "",
+    address: "",
+    ageGroup: "18-30",
     requestType: "",
     severity: "laag",
     consentAI: true,
@@ -13,7 +14,11 @@ export default function BurgerDashboard() {
   const [response, setResponse] = useState(null);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value
+    });
   };
 
   const handleSubmit = async () => {
@@ -23,34 +28,92 @@ export default function BurgerDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Er is iets misgegaan");
+      }
+
       const data = await res.json();
       setResponse(data);
     } catch (err) {
       console.error(err);
+      alert(err.message);
     }
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: 500, margin: "auto", padding: 20 }}>
       <h2>WMO Aanvraag</h2>
-      <input name="citizenId" placeholder="Citizen ID" onChange={handleChange} />
-      <input name="ageGroup" placeholder="Leeftijdsgroep" onChange={handleChange} />
-      <input name="requestType" placeholder="Type aanvraag" onChange={handleChange} />
-      <select name="severity" onChange={handleChange}>
+
+      <input
+        name="name"
+        placeholder="Naam"
+        value={form.name}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      />
+
+      <input
+        name="address"
+        placeholder="Adres"
+        value={form.address}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      />
+
+      <select
+        name="ageGroup"
+        value={form.ageGroup}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      >
+        <option value="0-17">0-17</option>
+        <option value="18-30">18-30</option>
+        <option value="31-50">31-50</option>
+        <option value="51-70">51-70</option>
+        <option value="71+">71+</option>
+      </select>
+
+      <input
+        name="requestType"
+        placeholder="Type aanvraag"
+        value={form.requestType}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      />
+
+      <select
+        name="severity"
+        value={form.severity}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      >
         <option value="laag">Laag</option>
         <option value="hoog">Hoog</option>
       </select>
-      <label>
+
+      <label style={{ display: "block", marginBottom: 10 }}>
         <input
           type="checkbox"
           name="consentAI"
           checked={form.consentAI}
-          onChange={(e) => setForm({ ...form, consentAI: e.target.checked })}
-        /> AI Toestemming
+          onChange={handleChange}
+        />{" "}
+        AI Toestemming
       </label>
-      <textarea name="description" placeholder="Beschrijving" onChange={handleChange}></textarea>
-      <br />
-      <button onClick={handleSubmit}>Verstuur</button>
+
+      <textarea
+        name="description"
+        placeholder="Beschrijving"
+        value={form.description}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      ></textarea>
+
+      <button onClick={handleSubmit} style={{ padding: "10px 20px" }}>
+        Verstuur
+      </button>
 
       {response && (
         <div style={{ marginTop: 20, border: "1px solid gray", padding: 10 }}>
@@ -58,6 +121,16 @@ export default function BurgerDashboard() {
           <p><strong>Token:</strong> {response.token}</p>
           <p><strong>Decision:</strong> {response.decision}</p>
           <p><strong>Message:</strong> {response.message}</p>
+          {response.flags && Object.keys(response.flags).length > 0 && (
+            <div>
+              <strong>Flags:</strong>
+              <ul>
+                {Object.entries(response.flags).map(([key, value]) => (
+                  <li key={key}>{key}: {String(value)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>
