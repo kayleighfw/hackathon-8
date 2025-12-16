@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class Application(BaseModel):
     name: str
+    email: EmailStr          # <-- correct type voor e-mail
     address: str
-    citizenId: str = ""  # wordt vervangen door token
+    citizenId: str = ""      # wordt vervangen door token
     ageGroup: str
     requestType: str
-    severity: str
     consentAI: bool
     description: str

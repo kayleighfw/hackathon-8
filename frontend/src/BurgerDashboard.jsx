@@ -1,13 +1,12 @@
-// src/BurgerDashboard.jsx
 import { useState } from "react";
 
 export default function BurgerDashboard() {
   const [form, setForm] = useState({
     name: "",
+    email: "",          // <-- nieuw veld voor e-mail
     address: "",
     ageGroup: "18-30",
     requestType: "",
-    severity: "laag",
     consentAI: true,
     description: ""
   });
@@ -22,25 +21,25 @@ export default function BurgerDashboard() {
   };
 
   const handleSubmit = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/applications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
+  try {
+    const res = await fetch("https://b98ae2a0a644.ngrok-free.app/applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form)
+    });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Er is iets misgegaan");
-      }
-
-      const data = await res.json();
-      setResponse(data);
-    } catch (err) {
-      console.error(err);
-      alert(err.message);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Er is iets misgegaan");
     }
-  };
+
+    const data = await res.json();
+    setResponse(data); // data bevat { token, status, message }
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
 
   return (
     <div style={{ maxWidth: 500, margin: "auto", padding: 20 }}>
@@ -50,6 +49,15 @@ export default function BurgerDashboard() {
         name="name"
         placeholder="Naam"
         value={form.name}
+        onChange={handleChange}
+        style={{ width: "100%", marginBottom: 10 }}
+      />
+
+      <input
+        name="email"
+        type="email"          // <-- type email
+        placeholder="E-mailadres"
+        value={form.email}
         onChange={handleChange}
         style={{ width: "100%", marginBottom: 10 }}
       />
@@ -83,16 +91,6 @@ export default function BurgerDashboard() {
         style={{ width: "100%", marginBottom: 10 }}
       />
 
-      <select
-        name="severity"
-        value={form.severity}
-        onChange={handleChange}
-        style={{ width: "100%", marginBottom: 10 }}
-      >
-        <option value="laag">Laag</option>
-        <option value="hoog">Hoog</option>
-      </select>
-
       <label style={{ display: "block", marginBottom: 10 }}>
         <input
           type="checkbox"
@@ -118,8 +116,6 @@ export default function BurgerDashboard() {
       {response && (
         <div style={{ marginTop: 20, border: "1px solid gray", padding: 10 }}>
           <h3>Resultaat</h3>
-          <p><strong>Token:</strong> {response.token}</p>
-          <p><strong>Decision:</strong> {response.decision}</p>
           <p><strong>Message:</strong> {response.message}</p>
           {response.flags && Object.keys(response.flags).length > 0 && (
             <div>
